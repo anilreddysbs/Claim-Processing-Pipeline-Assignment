@@ -7,4 +7,5 @@ python-multipart
 pdf2image
 pdfplumber
 python-dotenv
+reportlab
 google-generativeai

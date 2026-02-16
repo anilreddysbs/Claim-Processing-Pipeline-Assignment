@@ -4,10 +4,11 @@
 "Hello, this is a demonstration of the PDF Claim Processing Service built with FastAPI and LangGraph. This service uses a multi-agent system to classify and extract data from medical claim documents."
 
 ## Workflow Overview
-"The system follows this workflow:
-1.  **Segregator Agent**: Takes the PDF, analyzes each page using Groq (Llama-3.3-70b), and classifies them into types like Claim Form, Discharge Summary, or Itemized Bill.
-2.  **Extraction Agents**: specific agents (ID, Discharge, Bill) pick up the relevant pages based on the classification.
-3.  **Aggregator**: Combines everything into a final JSON response."
+"This is a PDF Claim Processing System. It uses AI agents to:
+1.  **Segregate** pages by type.
+2.  **Extract** specific data (Identity, Discharge, Bill).
+3.  **Aggregate** results into a structured format.
+4.  **Generate** a downloadable PDF report."
 
 ## Demonstration
 1.  **Show Code**: Briefly show `app/graph.py` to demonstrate the LangGraph structure.
@@ -15,11 +16,13 @@
     ```bash
     uvicorn app.main:app --reload
     ```
-3.  **Make Request**: Use Swagger UI (`http://127.0.0.1:8000/docs`) or Curl.
-    - Upload `final.pdf`.
-    - Set `claim_id` to "CLAIM-123".
-    - Execute.
-4.  **Show Response**: Explain the JSON output, showing how different sections (Identity, Bill, Discharge) are populated from different pages.
+3.  **Open Frontend**: Navigate to `http://127.0.0.1:8000` in your browser.
+4.  **Process Claim**:
+    - Enter `CLAIM-123`.
+    - Upload `final.pdf` (drag and drop).
+    - Click **Process Claim**.
+5.  **Show Results**: Explain the extracted data displayed on the UI.
+6.  **Download PDF**: Click the **Download Report (PDF)** button and show the generated PDF.
 5.  **Mention Groq Speed**: "We switched to Groq for ultra-fast inference, avoiding the rate limits we faced with other providers."
 
 ## Conclusion

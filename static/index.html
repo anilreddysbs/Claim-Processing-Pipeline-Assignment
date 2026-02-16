@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Claim Processor</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>AI Claim Processor</h1>
+            <p class="subtitle">Intelligent PDF Extraction & Classification Pipeline</p>
+        </header>
+
+        <div class="upload-card">
+            <form id="uploadForm">
+                <input type="text" id="claimId" placeholder="Enter Claim ID (e.g., CLAIM-001)" 
+                       style="padding: 0.75rem; width: 100%; max-width: 300px; margin-bottom: 1rem; border: 1px solid #e5e7eb; border-radius: 0.5rem;" required>
+                
+                <div class="file-input-wrapper">
+                    <input type="file" id="pdfFile" accept=".pdf" required>
+                    <div id="dropZoneText">
+                        <strong>Drop PDF here</strong> or click to upload
+                        <p class="subtitle" style="font-size: 0.875rem; margin-top: 0.5rem">Supported format: PDF</p>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn" id="processBtn">Process Claim</button>
+            </form>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Processing document agents...</p>
+            <p class="subtitle" style="font-size: 0.875rem">This may take up to a minute (Retrying if rate limited)</p>
+        </div>
+
+        <div id="results-section">
+            <div class="actions">
+                <button class="btn btn-secondary" onclick="resetForm()">Process Another</button>
+                <button class="btn" onclick="downloadPDF()">Download Report (PDF)</button>
+            </div>
+
+            <!-- Identity Section -->
+            <div class="result-card">
+                <div class="section-title">Identity Information</div>
+                <div class="data-grid" id="identityGrid">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Discharge Summary Section -->
+            <div class="result-card">
+                <div class="section-title">Discharge Summary</div>
+                <div class="data-grid" id="dischargeGrid">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Bill Section -->
+            <div class="result-card">
+                <div class="section-title">Itemized Bill</div>
+                <div id="billContent">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Logs Section -->
+            <div class="result-card">
+                <div class="section-title">Processing Logs</div>
+                <pre id="logsContent" style="max-height: 200px; overflow-y: auto;"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('uploadForm');
+        const fileInput = document.getElementById('pdfFile');
+        const dropZoneText = document.getElementById('dropZoneText');
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results-section');
+        const processBtn = document.getElementById('processBtn');
+
+        let currentData = null;
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                dropZoneText.innerHTML = `<strong>${e.target.files[0].name}</strong> selected`;
+            }
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const claimId = document.getElementById('claimId').value;
+            const file = fileInput.files[0];
+
+            if (!claimId || !file) return;
+
+            // UI Updates
+            loading.style.display = 'block';
+            results.style.display = 'none';
+            processBtn.disabled = true;
+
+            const formData = new FormData();
+            formData.append('claim_id', claimId);
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/api/process', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('Processing failed');
+
+                const data = await response.json();
+                currentData = data;
+                displayResults(data);
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                loading.style.display = 'none';
+                processBtn.disabled = false;
+            }
+        });
+
+        function displayResults(data) {
+            results.style.display = 'block';
+            
+            // Identity
+            const idInfo = data.extracted_data.identity || {};
+            const idGrid = document.getElementById('identityGrid');
+            idGrid.innerHTML = `
+                <div class="data-item"><label>Patient Name</label><span>${idInfo.patient_name || '-'}</span></div>
+                <div class="data-item"><label>DOB</label><span>${idInfo.dob || '-'}</span></div>
+                <div class="data-item"><label>Policy Number</label><span>${idInfo.policy_number || '-'}</span></div>
+                <div class="data-item"><label>ID Number</label><span>${idInfo.id_number || '-'}</span></div>
+            `;
+
+            // Discharge
+            const disInfo = data.extracted_data.discharge_summary || {};
+            const disGrid = document.getElementById('dischargeGrid');
+            disGrid.innerHTML = `
+                <div class="data-item"><label>Diagnosis</label><span>${disInfo.diagnosis || '-'}</span></div>
+                <div class="data-item"><label>Admission Date</label><span>${disInfo.admission_date || '-'}</span></div>
+                <div class="data-item"><label>Discharge Date</label><span>${disInfo.discharge_date || '-'}</span></div>
+                <div class="data-item"><label>Physician</label><span>${disInfo.physician_name || '-'}</span></div>
+            `;
+
+            // Bill
+            const billInfo = data.extracted_data.bill_data || {};
+            const billContent = document.getElementById('billContent');
+            let itemsHtml = '<div style="margin-bottom: 1rem;"><label>Total Amount:</label> <span style="font-size: 1.25rem; font-weight: bold; color: var(--primary-color);">' + (billInfo.total_amount || 0) + '</span></div>';
+            
+            if (billInfo.items && billInfo.items.length > 0) {
+                itemsHtml += '<table style="width: 100%; border-collapse: collapse;"><thead><tr style="text-align: left; border-bottom: 2px solid #e5e7eb;"><th style="padding: 0.5rem 0;">Item</th><th style="padding: 0.5rem 0; text-align: right;">Cost</th></tr></thead><tbody>';
+                billInfo.items.forEach(item => {
+                    itemsHtml += `<tr style="border-bottom: 1px solid #e5e7eb;"><td style="padding: 0.5rem 0;">${item.description}</td><td style="padding: 0.5rem 0; text-align: right;">${item.amount || '-'}</td></tr>`;
+                });
+                itemsHtml += '</tbody></table>';
+            } else {
+                itemsHtml += '<p>No items found.</p>';
+            }
+            billContent.innerHTML = itemsHtml;
+
+            // Logs
+            document.getElementById('logsContent').innerText = (data.agent_logs || []).join('\n');
+        }
+
+        async function downloadPDF() {
+            if (!currentData) return;
+            
+            const btn = event.target;
+            const originalText = btn.innerText;
+            btn.innerText = 'Generating...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('/api/download-pdf', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(currentData)
+                });
+
+                if (!response.ok) throw new Error('PDF generation failed');
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Claim_Report_${currentData.claim_id}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } catch (error) {
+                alert('Error downloading PDF: ' + error.message);
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('uploadForm').reset();
+            dropZoneText.innerHTML = '<strong>Drop PDF here</strong> or click to upload<p class="subtitle" style="font-size: 0.875rem; margin-top: 0.5rem">Supported format: PDF</p>';
+            results.style.display = 'none';
+            currentData = null;
+        }
+    </script>
+</body>
+</html>
