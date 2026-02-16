@@ -42,5 +42,16 @@ This is a FastAPI service designed to process PDF claims using a LangGraph-orche
 - **claim_id**: String
 - **file**: PDF File
 
+## Deployment (Render)
+
+This application includes a `Dockerfile` for easy deployment on Render or any Docker-compatible platform.
+
+1.  **Push to GitHub**: Ensure this repository is pushed to your GitHub account.
+2.  **Create New Web Service** on Render.
+3.  **Connect Repository**: Select this repository.
+4.  **Runtime**: Select **Docker**.
+5.  **Environment Variables**: add `GROQ_API_KEY` with your API key.
+6.  **Deploy**: Render will build the Docker image and start the service.
+
 ## Demo
-See `DEMO_SCRIPT.md` for a walkthrough.
+See `DEMO_SCRIPT.md` (local only) for a walkthrough.
