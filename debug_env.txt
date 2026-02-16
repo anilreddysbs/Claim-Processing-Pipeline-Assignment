@@ -1,0 +1,5 @@
+CWD: C:\Users\USER\Desktop\task\Claim-Processing-Pipeline-Assignment
+Checking C:\Users\USER\Desktop\task\Claim-Processing-Pipeline-Assignment\.env: False
+Checking C:\Users\USER\Desktop\task\.env: True
+Checking C:\Users\USER\Desktop\task\.env: True
+GOOGLE_API_KEY found: False

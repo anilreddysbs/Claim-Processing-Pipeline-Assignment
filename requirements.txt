@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+langgraph
+langchain-groq
+pydantic
+python-multipart
+pdf2image
+pdfplumber
+python-dotenv
+google-generativeai
