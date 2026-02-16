@@ -23,10 +23,19 @@ This is a FastAPI service designed to process PDF claims using a LangGraph-orche
     ```
 
 ## Usage
-Run the server:
-```bash
-uvicorn app.main:app --reload
-```
+
+1.  **Run the Server**:
+    ```bash
+    uvicorn app.main:app --reload
+    ```
+2.  **Open the Application**:
+    Navigate to `http://127.0.0.1:8000` in your web browser.
+
+3.  **Process a Claim**:
+    - Enter a Claim ID.
+    - Upload a PDF file.
+    - Click **Process Claim**.
+    - View extracted data and download the PDF report.
 
 ## API Endpoint
 `POST /api/process`
