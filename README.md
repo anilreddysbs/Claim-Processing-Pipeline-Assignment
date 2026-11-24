@@ -54,4 +54,6 @@ This application includes a `Dockerfile` for easy deployment on Render or any Do
 6.  **Deploy**: Render will build the Docker image and start the service.
 
 ## Demo
-See `DEMO_SCRIPT.md` (local only) for a walkthrough.
+See the [demo script](DEMO_SCRIPT.md) for a guided walkthrough.
+
+For demonstrations, use synthetic or de-identified documents. Do not submit real claim or patient information to an external model provider unless you have the required authorization and data protections.
